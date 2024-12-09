@@ -3,6 +3,7 @@ from hypothesis import given
 
 import minitorch
 from minitorch import Tensor
+from minitorch.tensor_functions import zeros
 
 from .strategies import assert_close
 from .tensor_strategies import tensors
@@ -31,8 +32,24 @@ def test_avg(t: Tensor) -> None:
 @pytest.mark.task4_4
 @given(tensors(shape=(2, 3, 4)))
 def test_max(t: Tensor) -> None:
-    # TODO: Implement for Task 4.4.
-    raise NotImplementedError("Need to implement for Task 4.4")
+    out = minitorch.max(t, 1)
+    for i in range(2):
+        for j in range(4):
+            assert_close(out[i, 0, j], max([t[i, k, j] for k in range(3)]))
+
+    out = minitorch.argmax(t, 1)
+    for i in range(2):
+        for j in range(4):
+            max_val = max([t[i, k, j] for k in range(3)])
+            for k in range(3):
+                if t[i, k, j] == max_val:
+                    assert_close(out[i, k, j], 1.0)
+                else:
+                    assert_close(out[i, k, j], 0.0)
+    z = zeros(t.shape)
+    minitorch.grad_check_max(
+        lambda t: minitorch.max(t, dim=1), t, sum_dim=out.sum(dim=1) + z, arg_max=out
+    )
 
 
 @pytest.mark.task4_4
